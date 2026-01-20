@@ -35,3 +35,43 @@ OBJECTIUS
 
  Historics
  NO RENOVACIONS
+
+
+
+
+
+# CLASSES
+# Parking:
+    -Ubi:(?)
+    -Nom:varchar
+    -Limit:int
+    -Plaçes:int
+    -TempsLimit:Date||int
+-------------------------------
+    +Is_Ple(Limit,Plaçes):bool
+
+# Persona:
+    -ID(DNI):varchar [00000000~99999999,+ A~Z]
+    -Nom:varchar
+    -Cognoms:varchar
+--------------------------------
+    +Verificar_DNI(Dni:int):bool
+
+# Coche:
+    -ID(MATRICULA):varchar [0000~9999,+AAA~ZZZ]
+    -ID_Persona(FK Persona(ID))
+    -Color:varchar
+    -Marca:varchar
+    ??? Model:varchar
+--------------------------------
+
+# Reserva:
+    -ID:int(AI)
+    -ID_Persona(FK Persona(ID))
+    -ID_Parking(FK Parking(ID))
+    -ID_Coche(FK Coche(ID))
+    -Data_In:Date
+    -Data_Out:Date
+--------------------------------
+     Finalitzar_Reserva(ID)
+     Crear_Reserva()

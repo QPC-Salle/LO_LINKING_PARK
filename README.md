@@ -42,6 +42,7 @@ OBJECTIUS
 
 # CLASSES
 # Parking:
+    -ID:int(AI)
     -Ubi:(?)
     -Nom:varchar
     -Limit:int

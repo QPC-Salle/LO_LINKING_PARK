@@ -1,4 +1,4 @@
-package com.example.lo_linking_park;
+package com.example.lo_linking_park.model;
 
 public class Persona {
     private String name,surname,DNI;

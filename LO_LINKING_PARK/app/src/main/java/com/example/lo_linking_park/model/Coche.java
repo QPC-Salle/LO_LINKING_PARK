@@ -1,4 +1,5 @@
-package com.example.lo_linking_park;
+package com.example.lo_linking_park.model;
+
 public class Coche {
     private String plate,color,brand;
     private Persona Propietari;

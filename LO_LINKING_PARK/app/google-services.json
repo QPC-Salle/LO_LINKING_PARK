@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "567569348441",
+    "project_id": "parkingsalle",
+    "storage_bucket": "parkingsalle.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:567569348441:android:fcc305ffa44d3d0f407e48",
+        "android_client_info": {
+          "package_name": "com.example.lo_linking_park"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDj0bGDrgw_x6pm2i3FmNLnJ9c8fMp4OJ4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,14 +2,18 @@ package com.example.lo_linking_park;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.example.lo_linking_park.utils.DataMigrationHelper;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,5 +57,29 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // PASO 5: Poblar Datos Iniciales
+        DataMigrationHelper migrationHelper = new DataMigrationHelper();
+        migrationHelper.checkIfDataExists(new DataMigrationHelper.CheckDataCallback() {
+            @Override
+            public void onResult(boolean exists) {
+                if (!exists) {
+                    // Migrar datos iniciales
+                    migrationHelper.migrateAll(new DataMigrationHelper.MigrationCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Toast.makeText(MainActivity.this,
+                                "Datos iniciales cargados", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onError(String error) {
+                            Log.e("MainActivity", "Error al cargar datos: " + error);
+                        }
+                    });
+                } else {
+                    Log.d("MainActivity", "Los datos iniciales ya existen. No se requiere migración.");
+                }
+            }
+        });
     }
 }

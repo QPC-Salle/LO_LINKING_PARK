@@ -3,8 +3,11 @@ package com.example.lo_linking_park.repository;
 import android.util.Log;
 
 import com.example.lo_linking_park.model.Usuario;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Date;
@@ -83,6 +86,39 @@ public class FirebaseAuthRepository {
                     callback.onError(error);
                 }
             });
+    }
+
+    public void loginWithGoogle(GoogleSignInAccount account, AuthCallback callback) {
+        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+        mAuth.signInWithCredential(credential)
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+                        if (firebaseUser != null) {
+                            String userId = firebaseUser.getUid();
+                            // Comprobar si el usuario ya existe en Firestore
+                            db.collection("users").document(userId).get().addOnCompleteListener(documentTask -> {
+                                if (documentTask.isSuccessful() && !documentTask.getResult().exists()) {
+                                    // El usuario no existe, crearlo en Firestore
+                                    Usuario newUser = new Usuario(
+                                            account.getGivenName() != null ? account.getGivenName() : "",
+                                            account.getFamilyName() != null ? account.getFamilyName() : "",
+                                            account.getEmail(),
+                                            ""
+                                    );
+                                    db.collection("users").document(userId).set(newUser)
+                                            .addOnSuccessListener(aVoid -> callback.onSuccess(userId))
+                                            .addOnFailureListener(e -> callback.onError(e.getMessage()));
+                                } else {
+                                    // El usuario ya existe
+                                    callback.onSuccess(userId);
+                                }
+                            });
+                        }
+                    } else {
+                        callback.onError(task.getException().getMessage());
+                    }
+                });
     }
 
     // Cerrar sesión
@@ -171,4 +207,6 @@ public class FirebaseAuthRepository {
         void onSuccess(Usuario usuario);
         void onError(String error);
     }
+
+
 }

@@ -41,8 +41,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation("com.google.android.gms:play-services-maps:18.2.0")
-    implementation("com.google.android.gms:play-services-location:21.0.1")
+
+    // Google Play Services
+    implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
 
     // Firebase
     implementation(platform(libs.firebase.bom))

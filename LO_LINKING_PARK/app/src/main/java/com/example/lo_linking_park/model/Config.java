@@ -2,7 +2,7 @@ package com.example.lo_linking_park.model;
 
 import java.util.Date;
 
-public class Configuracio {
+public class Config {
     private String id;
     private String clau;
     private String valor;
@@ -11,12 +11,12 @@ public class Configuracio {
     private String modificablePer;
     private Date actualitzatEl;
 
-    public Configuracio() {
+    public Config() {
         this.tipusDada = "string";
         this.modificablePer = "admin";
     }
 
-    public Configuracio(String clau, String valor, String descripcio, String tipusDada, String modificablePer) {
+    public Config(String clau, String valor, String descripcio, String tipusDada, String modificablePer) {
         this.clau = clau;
         this.valor = valor;
         this.descripcio = descripcio;

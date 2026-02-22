@@ -1,7 +1,5 @@
 package com.example.lo_linking_park.model;
 
-import java.util.Date;
-
 public class Usuario {
     private String id;
     private String nom;
@@ -10,15 +8,29 @@ public class Usuario {
     private String telefon;
     private String rol; // "admin" o "usuari"
     private boolean actiu;
-    private Date creatEl;
-    private Date actualitzatEl;
+    private long creatEl;
+    private long actualitzatEl;
 
-    // Constructor vacío requerido por Firestore
+    // Constructor vacío requerido por Firebase Realtime Database
     public Usuario() {
         this.actiu = true;
         this.rol = "usuari";
     }
 
+    // Constructor completo
+    public Usuario(String id, String nom, String cognoms, String email, String telefon, String rol, boolean actiu, long creatEl, long actualitzatEl) {
+        this.id = id;
+        this.nom = nom;
+        this.cognoms = cognoms;
+        this.email = email;
+        this.telefon = telefon;
+        this.rol = rol;
+        this.actiu = actiu;
+        this.creatEl = creatEl;
+        this.actualitzatEl = actualitzatEl;
+    }
+
+    // Constructor simplificado (sin id ni timestamps)
     public Usuario(String nom, String cognoms, String email, String telefon) {
         this.nom = nom;
         this.cognoms = cognoms;
@@ -26,8 +38,8 @@ public class Usuario {
         this.telefon = telefon;
         this.rol = "usuari";
         this.actiu = true;
-        this.creatEl = new Date();
-        this.actualitzatEl = new Date();
+        this.creatEl = System.currentTimeMillis();
+        this.actualitzatEl = System.currentTimeMillis();
     }
 
     // Getters y Setters
@@ -87,19 +99,19 @@ public class Usuario {
         this.actiu = actiu;
     }
 
-    public Date getCreatEl() {
+    public long getCreatEl() {
         return creatEl;
     }
 
-    public void setCreatEl(Date creatEl) {
+    public void setCreatEl(long creatEl) {
         this.creatEl = creatEl;
     }
 
-    public Date getActualitzatEl() {
+    public long getActualitzatEl() {
         return actualitzatEl;
     }
 
-    public void setActualitzatEl(Date actualitzatEl) {
+    public void setActualitzatEl(long actualitzatEl) {
         this.actualitzatEl = actualitzatEl;
     }
 

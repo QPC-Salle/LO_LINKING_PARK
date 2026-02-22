@@ -14,6 +14,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.lo_linking_park.utils.DataMigrationHelper;
+import com.example.lo_linking_park.utils.FirebaseConnectionValidator;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -27,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
+        // ✅ TEST FIREBASE CONNECTION
+        FirebaseConnectionValidator.runFullTest();
 
     //Init
         Button btnRegistrat = findViewById(R.id.btnRegistrat);

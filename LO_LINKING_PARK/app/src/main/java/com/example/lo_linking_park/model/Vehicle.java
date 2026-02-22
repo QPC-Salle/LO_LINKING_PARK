@@ -1,7 +1,5 @@
 package com.example.lo_linking_park.model;
 
-import java.util.Date;
-
 public class Vehicle {
     private String id;
     private String usuariId;
@@ -12,15 +10,31 @@ public class Vehicle {
     private int anyFabricacio;
     private boolean predeterminat;
     private boolean actiu;
-    private Date creatEl;
-    private Date actualitzatEl;
+    private long creatEl;
+    private long actualitzatEl;
 
-    // Constructor vacío requerido por Firestore
+    // Constructor vacío requerido por Firebase Realtime Database
     public Vehicle() {
         this.actiu = true;
         this.predeterminat = false;
     }
 
+    // Constructor completo
+    public Vehicle(String id, String usuariId, String matricula, String marca, String model, String color, int anyFabricacio, boolean predeterminat, boolean actiu, long creatEl, long actualitzatEl) {
+        this.id = id;
+        this.usuariId = usuariId;
+        this.matricula = matricula;
+        this.marca = marca;
+        this.model = model;
+        this.color = color;
+        this.anyFabricacio = anyFabricacio;
+        this.predeterminat = predeterminat;
+        this.actiu = actiu;
+        this.creatEl = creatEl;
+        this.actualitzatEl = actualitzatEl;
+    }
+
+    // Constructor simplificado (sin id ni timestamps)
     public Vehicle(String usuariId, String matricula, String marca, String model, String color, int anyFabricacio) {
         this.usuariId = usuariId;
         this.matricula = matricula;
@@ -30,8 +44,8 @@ public class Vehicle {
         this.anyFabricacio = anyFabricacio;
         this.actiu = true;
         this.predeterminat = false;
-        this.creatEl = new Date();
-        this.actualitzatEl = new Date();
+        this.creatEl = System.currentTimeMillis();
+        this.actualitzatEl = System.currentTimeMillis();
     }
 
     // Getters y Setters
@@ -107,19 +121,19 @@ public class Vehicle {
         this.actiu = actiu;
     }
 
-    public Date getCreatEl() {
+    public long getCreatEl() {
         return creatEl;
     }
 
-    public void setCreatEl(Date creatEl) {
+    public void setCreatEl(long creatEl) {
         this.creatEl = creatEl;
     }
 
-    public Date getActualitzatEl() {
+    public long getActualitzatEl() {
         return actualitzatEl;
     }
 
-    public void setActualitzatEl(Date actualitzatEl) {
+    public void setActualitzatEl(long actualitzatEl) {
         this.actualitzatEl = actualitzatEl;
     }
 }

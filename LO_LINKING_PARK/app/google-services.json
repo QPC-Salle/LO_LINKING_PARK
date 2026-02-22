@@ -1,8 +1,8 @@
 {
   "project_info": {
     "project_number": "567569348441",
-    "project_id": "parkingsalle",
-    "storage_bucket": "parkingsalle.firebasestorage.app"
+    "project_id": "lo-linking-park",
+    "storage_bucket": "lo-linking-park.firebasestorage.app"
   },
   "client": [
     {

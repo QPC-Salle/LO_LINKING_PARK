@@ -64,6 +64,11 @@ public class RealtimeDatabaseManager {
         void onError(String error);
     }
 
+    public interface ExistsCallback {
+        void onResult(boolean exists);
+        void onError(String error);
+    }
+
     // Helpers
     private FirebaseUser getCurrentUser() {
         return mAuth.getCurrentUser();
@@ -72,6 +77,29 @@ public class RealtimeDatabaseManager {
     private String getCurrentUid() {
         FirebaseUser user = getCurrentUser();
         return user != null ? user.getUid() : null;
+    }
+
+    // Verifica si un email ya existe en /users
+    public void isEmailRegistered(String email, ExistsCallback callback) {
+        if (email == null || email.trim().isEmpty()) {
+            callback.onError("Email inválido");
+            return;
+        }
+
+        rootRef.child("users")
+            .orderByChild("email")
+            .equalTo(email)
+            .addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    callback.onResult(snapshot.exists());
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    callback.onError(error.getMessage());
+                }
+            });
     }
 
     // 1) createUser: escribe los datos del usuario en Realtime Database bajo /users/{uid}
@@ -544,6 +572,245 @@ public class RealtimeDatabaseManager {
     public interface ActiveSessionCallback {
         void onSessionUpdate(Session session);
         void onNoActiveSession();
+        void onError(String error);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // FUNCIONES CRUD ADICIONALES
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    // ✅ READ: Obtener un usuario específico
+    public void getUsuario(String uid, UserDataCallback callback) {
+        DatabaseReference userRef = rootRef.child("users").child(uid);
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Usuario usuario = snapshot.getValue(Usuario.class);
+                    if (usuario != null) {
+                        usuario.setId(snapshot.getKey());
+                        callback.onSuccess(usuario);
+                    } else {
+                        callback.onError("Error al convertir usuario");
+                    }
+                } else {
+                    callback.onError("Usuario no encontrado");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e(TAG, "Error al obtener usuario", error.toException());
+                callback.onError(error.getMessage());
+            }
+        });
+    }
+
+    // ✅ READ: Obtener un vehículo específico
+    public void getVehicle(String vehicleId, VehicleCallback callback) {
+        DatabaseReference vehicleRef = rootRef.child("vehicles").child(vehicleId);
+        vehicleRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Vehicle vehicle = snapshot.getValue(Vehicle.class);
+                    if (vehicle != null) {
+                        vehicle.setId(snapshot.getKey());
+                        callback.onSuccess(vehicle);
+                    } else {
+                        callback.onError("Error al convertir vehículo");
+                    }
+                } else {
+                    callback.onError("Vehículo no encontrado");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e(TAG, "Error al obtener vehículo", error.toException());
+                callback.onError(error.getMessage());
+            }
+        });
+    }
+
+    // ✅ READ: Obtener una sesión específica
+    public void getParkingSession(String sessionId, SessionCallback callback) {
+        DatabaseReference sessionRef = rootRef.child("parkingSessions").child(getCurrentUid()).child(sessionId);
+        sessionRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    Session session = snapshot.getValue(Session.class);
+                    if (session != null) {
+                        session.setId(snapshot.getKey());
+                        callback.onSuccess(session);
+                    } else {
+                        callback.onError("Error al convertir sesión");
+                    }
+                } else {
+                    callback.onError("Sesión no encontrada");
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Log.e(TAG, "Error al obtener sesión", error.toException());
+                callback.onError(error.getMessage());
+            }
+        });
+    }
+
+    // ✅ UPDATE: Actualizar datos del usuario
+    public void updateUsuario(String uid, Usuario usuario, UserCallback callback) {
+        usuario.setId(uid);
+        usuario.setActualitzatEl(System.currentTimeMillis());
+
+        DatabaseReference userRef = rootRef.child("users").child(uid);
+        userRef.setValue(usuario)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✓ Usuario actualizado: " + uid);
+                    callback.onSuccess(uid);
+                })
+                .addOnFailureListener(exception -> {
+                    Log.e(TAG, "✗ Error al actualizar usuario", exception);
+                    callback.onError(exception.getMessage());
+                });
+    }
+
+    // ✅ UPDATE: Actualizar campos del usuario
+    public void updateUsuarioFields(String uid, Map<String, Object> updates, UserCallback callback) {
+        if (uid == null || uid.isEmpty()) {
+            callback.onError("UID inválido");
+            return;
+        }
+
+        if (updates == null || updates.isEmpty()) {
+            callback.onError("No hay cambios para guardar");
+            return;
+        }
+
+        updates.put("actualitzatEl", System.currentTimeMillis());
+
+        DatabaseReference userRef = rootRef.child("users").child(uid);
+        userRef.updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✓ Usuario actualizado (fields): " + uid);
+                    callback.onSuccess(uid);
+                })
+                .addOnFailureListener(exception -> {
+                    Log.e(TAG, "✗ Error al actualizar usuario (fields)", exception);
+                    callback.onError(exception.getMessage());
+                });
+    }
+
+    // ✅ UPDATE: Actualizar datos del vehículo
+    public void updateVehicle(String vehicleId, Vehicle vehicle, VehicleCallback callback) {
+        vehicle.setId(vehicleId);
+        vehicle.setActualitzatEl(System.currentTimeMillis());
+
+        DatabaseReference vehicleRef = rootRef.child("vehicles").child(vehicleId);
+        vehicleRef.setValue(vehicle)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✓ Vehículo actualizado: " + vehicleId);
+                    callback.onSuccess(vehicle);
+                })
+                .addOnFailureListener(exception -> {
+                    Log.e(TAG, "✗ Error al actualizar vehículo", exception);
+                    callback.onError(exception.getMessage());
+                });
+    }
+
+    // ✅ UPDATE: Cancelar sesión de parking
+    public void cancelParkingSession(String sessionId, SessionCallback callback) {
+        String uid = getCurrentUid();
+        if (uid == null) {
+            callback.onError("No hay usuario autenticado");
+            return;
+        }
+
+        DatabaseReference sessionRef = rootRef.child("parkingSessions").child(uid).child(sessionId);
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("estat", "cancel·lat");
+        updates.put("actualitzatEl", System.currentTimeMillis());
+
+        sessionRef.updateChildren(updates)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✓ Sesión cancelada: " + sessionId);
+                    sessionRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot snapshot) {
+                            Session session = snapshot.getValue(Session.class);
+                            if (session != null) {
+                                session.setId(snapshot.getKey());
+                                callback.onSuccess(session);
+                            } else {
+                                callback.onError("No se pudo leer la sesión");
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) {
+                            callback.onError(error.getMessage());
+                        }
+                    });
+                })
+                .addOnFailureListener(exception -> {
+                    Log.e(TAG, "✗ Error al cancelar sesión", exception);
+                    callback.onError(exception.getMessage());
+                });
+    }
+
+    // ✅ DELETE: Eliminar usuario
+    public void deleteUsuario(String uid, SimpleCallback callback) {
+        DatabaseReference userRef = rootRef.child("users").child(uid);
+        userRef.removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✓ Usuario eliminado: " + uid);
+                    callback.onSuccess();
+                })
+                .addOnFailureListener(exception -> {
+                    Log.e(TAG, "✗ Error al eliminar usuario", exception);
+                    callback.onError(exception.getMessage());
+                });
+    }
+
+    // ✅ DELETE: Eliminar vehículo
+    public void deleteVehicle(String vehicleId, SimpleCallback callback) {
+        DatabaseReference vehicleRef = rootRef.child("vehicles").child(vehicleId);
+        vehicleRef.removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✓ Vehículo eliminado: " + vehicleId);
+                    callback.onSuccess();
+                })
+                .addOnFailureListener(exception -> {
+                    Log.e(TAG, "✗ Error al eliminar vehículo", exception);
+                    callback.onError(exception.getMessage());
+                });
+    }
+
+    // ✅ DELETE: Eliminar sesión de parking
+    public void deleteParkingSession(String sessionId, SimpleCallback callback) {
+        String uid = getCurrentUid();
+        if (uid == null) {
+            callback.onError("No hay usuario autenticado");
+            return;
+        }
+
+        DatabaseReference sessionRef = rootRef.child("parkingSessions").child(uid).child(sessionId);
+        sessionRef.removeValue()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✓ Sesión eliminada: " + sessionId);
+                    callback.onSuccess();
+                })
+                .addOnFailureListener(exception -> {
+                    Log.e(TAG, "✗ Error al eliminar sesión", exception);
+                    callback.onError(exception.getMessage());
+                });
+    }
+
+    // ✅ Interfaz de callback para obtener datos de usuario
+    public interface UserDataCallback {
+        void onSuccess(Usuario usuario);
         void onError(String error);
     }
 }

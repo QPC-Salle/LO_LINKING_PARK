@@ -18,7 +18,7 @@ public class MapActivity extends AppCompatActivity implements OnMapReadyCallback
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map);
+        setContentView(R.layout.activity_map_parquimetre);
 
         // Obtener el fragmento del mapa
         SupportMapFragment mapFragment = SupportMapFragment.newInstance();

@@ -8,7 +8,6 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class VehicleRepository {
@@ -46,8 +45,9 @@ public class VehicleRepository {
                 // Verificar que la matrícula no exista
                 checkMatriculaExists(vehicle.getMatricula(), exists -> {
                     if (!exists) {
-                        vehicle.setCreatEl(new Date());
-                        vehicle.setActualitzatEl(new Date());
+                        long now = System.currentTimeMillis();
+                        vehicle.setCreatEl(now);
+                        vehicle.setActualitzatEl(now);
 
                         db.collection("vehicles")
                             .add(vehicle)
@@ -160,7 +160,7 @@ public class VehicleRepository {
 
                 // Ahora establecer el nuevo predeterminado
                 db.collection("vehicles").document(vehicleId)
-                    .update("predeterminat", true, "actualitzatEl", new Date())
+                    .update("predeterminat", true, "actualitzatEl", System.currentTimeMillis())
                     .addOnSuccessListener(aVoid -> {
                         Log.d(TAG, "Vehículo predeterminado establecido: " + vehicleId);
                         callback.onSuccess(vehicleId);
@@ -178,7 +178,7 @@ public class VehicleRepository {
 
     // Actualizar vehículo
     public void updateVehicle(String vehicleId, Vehicle vehicle, VehicleCallback callback) {
-        vehicle.setActualitzatEl(new Date());
+        vehicle.setActualitzatEl(System.currentTimeMillis());
 
         db.collection("vehicles").document(vehicleId)
             .set(vehicle)
@@ -195,7 +195,7 @@ public class VehicleRepository {
     // Desactivar vehículo (borrado lógico)
     public void deactivateVehicle(String vehicleId, VehicleCallback callback) {
         db.collection("vehicles").document(vehicleId)
-            .update("actiu", false, "actualitzatEl", new Date())
+            .update("actiu", false, "actualitzatEl", System.currentTimeMillis())
             .addOnSuccessListener(aVoid -> {
                 Log.d(TAG, "Vehículo desactivado: " + vehicleId);
                 callback.onSuccess(vehicleId);

@@ -40,6 +40,27 @@ public class SalleRepository {
         void onSuccess(Salle salle);
         void onError(String error);
     }
+    public interface ConnectionCallback {
+        void onConnected();
+        void onDisconnected(String error);
+    }
+
+    public void checkFirebaseConnection(ConnectionCallback callback) {
+        // Intenta leer un documento pequeño o hacer una consulta simple
+        db.collection("salles")
+                .limit(1)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    Log.d(TAG, "✓ Conexión exitosa con Firebase Firestore");
+                    callback.onConnected();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "✗ Error de conexión con Firebase: " + e.getMessage(), e);
+                    callback.onDisconnected(e.getMessage());
+                });
+    }
+
+
 
     // Obtener todas las salles activas
     public void getAllActiveSalles(SalleListCallback callback) {

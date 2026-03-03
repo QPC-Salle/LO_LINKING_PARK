@@ -87,33 +87,33 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        if (TextUtils.isEmpty(password)) {
-            etPassword.setError("La contraseña es obligatoria");
-            etPassword.requestFocus();
-            return;
-        }
+         if (TextUtils.isEmpty(password)) {
+             etPassword.setError("La contraseña es obligatoria");
+             etPassword.requestFocus();
+              return;
+          }
 
         if (password.length() < 6) {
             etPassword.setError("La contraseña debe tener al menos 6 caracteres");
             etPassword.requestFocus();
             return;
-        }
+         }
 
         if (!password.equals(confirmPassword)) {
             etConfirmPassword.setError("Las contraseñas no coinciden");
-            etConfirmPassword.requestFocus();
-            return;
-        }
+             etConfirmPassword.requestFocus();
+             return;
+         }
 
         // Mostrar progreso
         progressBar.setVisibility(View.VISIBLE);
         btnRegister.setEnabled(false);
 
         // Crear objeto Usuario
-        Usuario usuario = new Usuario(nom, cognoms, email, telefon);
+        Usuario usuario = new Usuario(nom, cognoms, email, telefon, password);
 
         // Registrar en Firebase
-        authRepository.registerUser(email, password, usuario, new FirebaseAuthRepository.AuthCallback() {
+        authRepository.registerUser(email,password , usuario, new FirebaseAuthRepository.AuthCallback() {
             @Override
             public void onSuccess(String userId) {
                 progressBar.setVisibility(View.GONE);

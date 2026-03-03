@@ -13,6 +13,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.example.lo_linking_park.repository.SalleRepository;
 import com.example.lo_linking_park.utils.DataMigrationHelper;
 import com.example.lo_linking_park.utils.FirebaseConnectionValidator;
 
@@ -31,6 +32,25 @@ public class MainActivity extends AppCompatActivity {
 
         // ✅ TEST FIREBASE CONNECTION
         FirebaseConnectionValidator.runFullTest();
+
+        SalleRepository.getInstance().checkFirebaseConnection(new SalleRepository.ConnectionCallback() {
+            @Override
+            public void onConnected() {
+                Log.d("MainActivity", "Firebase está conectado correctamente");
+                // Puedes mostrar un Toast o actualizar la UI
+            }
+
+            @Override
+            public void onDisconnected(String error) {
+                Log.e("MainActivity", "Firebase NO está conectado: " + error);
+                // Muestra un mensaje de error al usuario
+            }
+        });
+
+
+
+
+
 
     //Init
         Button btnRegistrat = findViewById(R.id.btnRegistrat);

@@ -12,7 +12,7 @@ public class Usuario {
     private long actualitzatEl;
 
     // Constructor vacío requerido por Firebase Realtime Database
-    public Usuario() {
+    public Usuario(String nom, String cognoms, String email, String telefon, String password) {
         this.actiu = true;
         this.rol = "usuari";
     }

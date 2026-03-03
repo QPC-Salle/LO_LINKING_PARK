@@ -2,6 +2,8 @@ package com.example.lo_linking_park;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,5 +47,24 @@ public class MenuActivity extends AppCompatActivity {
         // Card 4 → Garatge (vehicles)
         CardView c4 = findViewById(R.id.cardOption4);
         if (c4 != null) c4.setOnClickListener(v -> startActivity(new Intent(this, GaratgeActivity.class)));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SessionManager sm = new SessionManager(this);
+        Button btnSessionActiva = findViewById(R.id.btnSessionActiva);
+        if (btnSessionActiva != null) {
+            if (sm.hasActiveSession()) {
+                btnSessionActiva.setVisibility(View.VISIBLE);
+                btnSessionActiva.setOnClickListener(v -> {
+                    Intent i = new Intent(this, ParkingSessionActivity.class);
+                    i.putExtra("salleId", sm.getSessionSalleId());
+                    startActivity(i);
+                });
+            } else {
+                btnSessionActiva.setVisibility(View.GONE);
+            }
+        }
     }
 }

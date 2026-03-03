@@ -27,4 +27,30 @@ public class SessionManager {
     public boolean isLoggedIn()   { return prefs.getBoolean("isLogged", false); }
 
     public void clearSession() { editor.clear(); editor.apply(); }
+
+    // ── Active parking session ──────────────────────────────────────────────
+
+    public void saveActiveSession(int sessionId, long startTime, int tempsMaxim, int salleId) {
+        editor.putInt("activeSessionId", sessionId);
+        editor.putLong("sessionStartTime", startTime);
+        editor.putInt("sessionTempsMaxim", tempsMaxim);
+        editor.putInt("sessionSalleId", salleId);
+        editor.putBoolean("hasActiveSession", true);
+        editor.apply();
+    }
+
+    public int     getActiveSessionId()    { return prefs.getInt("activeSessionId", -1); }
+    public long    getSessionStartTime()   { return prefs.getLong("sessionStartTime", 0); }
+    public int     getSessionTempsMaxim()  { return prefs.getInt("sessionTempsMaxim", 60); }
+    public int     getSessionSalleId()     { return prefs.getInt("sessionSalleId", -1); }
+    public boolean hasActiveSession()      { return prefs.getBoolean("hasActiveSession", false); }
+
+    public void clearActiveSession() {
+        editor.remove("activeSessionId");
+        editor.remove("sessionStartTime");
+        editor.remove("sessionTempsMaxim");
+        editor.remove("sessionSalleId");
+        editor.putBoolean("hasActiveSession", false);
+        editor.apply();
+    }
 }

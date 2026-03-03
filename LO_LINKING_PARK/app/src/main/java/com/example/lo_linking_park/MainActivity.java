@@ -2,23 +2,16 @@ package com.example.lo_linking_park;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.Toast;
-
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
-
-import com.example.lo_linking_park.repository.SalleRepository;
-import com.example.lo_linking_park.utils.DataMigrationHelper;
-import com.example.lo_linking_park.utils.FirebaseConnectionValidator;
+import com.example.lo_linking_park.utils.SessionManager;
 
 public class MainActivity extends AppCompatActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -30,80 +23,20 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        // ✅ TEST FIREBASE CONNECTION
-        FirebaseConnectionValidator.runFullTest();
+        // Si ja hi ha sessió, anar directament al menú
+        SessionManager sessionManager = new SessionManager(this);
+        if (sessionManager.isLoggedIn()) {
+            startActivity(new Intent(this, MenuActivity.class));
+            finish();
+            return;
+        }
 
-        SalleRepository.getInstance().checkFirebaseConnection(new SalleRepository.ConnectionCallback() {
-            @Override
-            public void onConnected() {
-                Log.d("MainActivity", "Firebase está conectado correctamente");
-                // Puedes mostrar un Toast o actualizar la UI
-            }
-
-            @Override
-            public void onDisconnected(String error) {
-                Log.e("MainActivity", "Firebase NO está conectado: " + error);
-                // Muestra un mensaje de error al usuario
-            }
-        });
-
-
-
-
-
-
-    //Init
         Button btnRegistrat = findViewById(R.id.btnRegistrat);
         Button btnLogin = findViewById(R.id.btnLogin);
-        Button btnLoginGoogle = findViewById(R.id.btnLoginGoogle);
-    //Funcions
-        btnRegistrat.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, RegisterActivity.class);
-                startActivity(i);
-            }
-        });
+        View btnLoginGoogle = findViewById(R.id.btnLoginGoogle);
+        if (btnLoginGoogle != null) btnLoginGoogle.setVisibility(View.GONE);
 
-        btnLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(i);
-            }
-        });
-
-        btnLoginGoogle.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(MainActivity.this, LoginGActivity.class);
-                startActivity(i);
-            }
-        });
-
-        // PASO 5: Poblar Datos Iniciales
-        DataMigrationHelper migrationHelper = new DataMigrationHelper();
-        migrationHelper.checkIfDataExists(new DataMigrationHelper.CheckDataCallback() {
-            @Override
-            public void onResult(boolean exists) {
-                if (!exists) {
-                    // Migrar datos iniciales
-                    migrationHelper.migrateAll(new DataMigrationHelper.MigrationCallback() {
-                        @Override
-                        public void onSuccess() {
-                            Toast.makeText(MainActivity.this,
-                                "Datos iniciales cargados", Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onError(String error) {
-                            Log.e("MainActivity", "Error al cargar datos: " + error);
-                        }
-                    });
-                } else {
-                    Log.d("MainActivity", "Los datos iniciales ya existen. No se requiere migración.");
-                }
-            }
-        });
+        btnRegistrat.setOnClickListener(v -> startActivity(new Intent(this, RegisterActivity.class)));
+        btnLogin.setOnClickListener(v -> startActivity(new Intent(this, LoginActivity.class)));
     }
 }

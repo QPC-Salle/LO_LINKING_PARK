@@ -1,35 +1,21 @@
 package com.example.lo_linking_park.repository;
 
-import android.util.Log;
-
 import com.example.lo_linking_park.model.Vehicle;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-
+import com.example.lo_linking_park.network.ApiClient;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
 public class VehicleRepository {
-    private static final String TAG = "VehicleRepository";
-    private static final int MAX_VEHICLES_PER_USER = 5;
     private static VehicleRepository instance;
-    private FirebaseFirestore db;
+    private final ApiClient api;
 
-    private VehicleRepository() {
-        db = FirebaseFirestore.getInstance();
-    }
+    private VehicleRepository() { api = ApiClient.getInstance(); }
 
     public static synchronized VehicleRepository getInstance() {
-        if (instance == null) {
-            instance = new VehicleRepository();
-        }
+        if (instance == null) instance = new VehicleRepository();
         return instance;
-    }
-
-    public interface VehicleCallback {
-        void onSuccess(String vehicleId);
-        void onError(String error);
     }
 
     public interface VehicleListCallback {
@@ -37,177 +23,71 @@ public class VehicleRepository {
         void onError(String error);
     }
 
-    // Añadir vehículo
-    public void addVehicle(Vehicle vehicle, VehicleCallback callback) {
-        // Primero verificar que el usuario no tenga más de 5 vehículos activos
-        checkMaxVehicles(vehicle.getUsuariId(), canAdd -> {
-            if (canAdd) {
-                // Verificar que la matrícula no exista
-                checkMatriculaExists(vehicle.getMatricula(), exists -> {
-                    if (!exists) {
-                        long now = System.currentTimeMillis();
-                        vehicle.setCreatEl(now);
-                        vehicle.setActualitzatEl(now);
+    public interface VehicleCallback {
+        void onSuccess(String vehicleId);
+        void onError(String error);
+    }
 
-                        db.collection("vehicles")
-                            .add(vehicle)
-                            .addOnSuccessListener(documentReference -> {
-                                String vehicleId = documentReference.getId();
-                                Log.d(TAG, "Vehículo añadido: " + vehicleId);
-                                callback.onSuccess(vehicleId);
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e(TAG, "Error al añadir vehículo", e);
-                                callback.onError(e.getMessage());
-                            });
-                    } else {
-                        callback.onError("La matrícula ya existe");
+    public void getVehiclesByUser(int userId, VehicleListCallback callback) {
+        api.get("vehicles.php?user_id=" + userId, new ApiClient.ApiCallback() {
+            @Override public void onSuccess(JSONObject r) {
+                try {
+                    List<Vehicle> list = new ArrayList<>();
+                    if (r.getBoolean("success")) {
+                        JSONArray arr = r.getJSONArray("vehicles");
+                        for (int i = 0; i < arr.length(); i++) {
+                            JSONObject obj = arr.getJSONObject(i);
+                            Vehicle v = new Vehicle();
+                            v.setId(String.valueOf(obj.getInt("id")));
+                            v.setMatricula(obj.getString("matricula"));
+                            v.setMarca(obj.optString("marca", ""));
+                            v.setModel(obj.optString("model", ""));
+                            v.setColor(obj.optString("color", ""));
+                            list.add(v);
+                        }
                     }
-                });
-            } else {
-                callback.onError("Un usuario no puede tener más de " + MAX_VEHICLES_PER_USER + " vehículos activos");
+                    callback.onSuccess(list);
+                } catch (Exception e) { callback.onError(e.getMessage()); }
             }
+            @Override public void onError(String e) { callback.onError(e); }
         });
     }
 
-    // Verificar máximo de vehículos por usuario
-    private void checkMaxVehicles(String usuariId, CheckCallback callback) {
-        db.collection("vehicles")
-            .whereEqualTo("usuariId", usuariId)
-            .whereEqualTo("actiu", true)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                int count = queryDocumentSnapshots.size();
-                callback.onResult(count < MAX_VEHICLES_PER_USER);
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al verificar máximo de vehículos", e);
-                callback.onResult(false);
-            });
-    }
-
-    // Verificar si matrícula existe
-    private void checkMatriculaExists(String matricula, CheckCallback callback) {
-        db.collection("vehicles")
-            .whereEqualTo("matricula", matricula)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                callback.onResult(!queryDocumentSnapshots.isEmpty());
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al verificar matrícula", e);
-                callback.onResult(false);
-            });
-    }
-
-    // Obtener vehículos de un usuario
-    public void getUserVehicles(String usuariId, VehicleListCallback callback) {
-        db.collection("vehicles")
-            .whereEqualTo("usuariId", usuariId)
-            .whereEqualTo("actiu", true)
-            .orderBy("predeterminat", Query.Direction.DESCENDING)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                List<Vehicle> vehicles = new ArrayList<>();
-                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    Vehicle vehicle = document.toObject(Vehicle.class);
-                    vehicle.setId(document.getId());
-                    vehicles.add(vehicle);
+    public void addVehicle(int userId, Vehicle vehicle, VehicleCallback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("user_id", userId);
+            body.put("matricula", vehicle.getMatricula());
+            body.put("marca", vehicle.getMarca());
+            body.put("model", vehicle.getModel());
+            body.put("color", vehicle.getColor());
+            body.put("any_fabricacio", vehicle.getAnyFabricacio());
+            api.post("vehicles.php", body, new ApiClient.ApiCallback() {
+                @Override public void onSuccess(JSONObject r) {
+                    try {
+                        if (r.getBoolean("success")) callback.onSuccess(String.valueOf(r.getInt("id")));
+                        else callback.onError(r.getString("message"));
+                    } catch (Exception e) { callback.onError(e.getMessage()); }
                 }
-                Log.d(TAG, "Vehículos obtenidos: " + vehicles.size());
-                callback.onSuccess(vehicles);
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al obtener vehículos", e);
-                callback.onError(e.getMessage());
+                @Override public void onError(String e) { callback.onError(e); }
             });
+        } catch (Exception e) { callback.onError(e.getMessage()); }
     }
 
-    // Obtener vehículo predeterminado
-    public void getDefaultVehicle(String usuariId, VehicleCallback callback) {
-        db.collection("vehicles")
-            .whereEqualTo("usuariId", usuariId)
-            .whereEqualTo("predeterminat", true)
-            .whereEqualTo("actiu", true)
-            .limit(1)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                if (!queryDocumentSnapshots.isEmpty()) {
-                    String vehicleId = queryDocumentSnapshots.getDocuments().get(0).getId();
-                    callback.onSuccess(vehicleId);
-                } else {
-                    callback.onError("No hay vehículo predeterminado");
+    public void deleteVehicle(String vehicleId, VehicleCallback callback) {
+        try {
+            JSONObject body = new JSONObject();
+            body.put("action", "delete");
+            body.put("id", vehicleId);
+            api.post("vehicles.php", body, new ApiClient.ApiCallback() {
+                @Override public void onSuccess(JSONObject r) {
+                    try {
+                        if (r.getBoolean("success")) callback.onSuccess(vehicleId);
+                        else callback.onError(r.getString("message"));
+                    } catch (Exception e) { callback.onError(e.getMessage()); }
                 }
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al obtener vehículo predeterminado", e);
-                callback.onError(e.getMessage());
+                @Override public void onError(String e) { callback.onError(e); }
             });
-    }
-
-    // Establecer vehículo como predeterminado
-    public void setDefaultVehicle(String usuariId, String vehicleId, VehicleCallback callback) {
-        // Primero quitar predeterminado de todos los vehículos del usuario
-        db.collection("vehicles")
-            .whereEqualTo("usuariId", usuariId)
-            .whereEqualTo("predeterminat", true)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    db.collection("vehicles").document(document.getId())
-                        .update("predeterminat", false);
-                }
-
-                // Ahora establecer el nuevo predeterminado
-                db.collection("vehicles").document(vehicleId)
-                    .update("predeterminat", true, "actualitzatEl", System.currentTimeMillis())
-                    .addOnSuccessListener(aVoid -> {
-                        Log.d(TAG, "Vehículo predeterminado establecido: " + vehicleId);
-                        callback.onSuccess(vehicleId);
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error al establecer vehículo predeterminado", e);
-                        callback.onError(e.getMessage());
-                    });
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al quitar vehículo predeterminado anterior", e);
-                callback.onError(e.getMessage());
-            });
-    }
-
-    // Actualizar vehículo
-    public void updateVehicle(String vehicleId, Vehicle vehicle, VehicleCallback callback) {
-        vehicle.setActualitzatEl(System.currentTimeMillis());
-
-        db.collection("vehicles").document(vehicleId)
-            .set(vehicle)
-            .addOnSuccessListener(aVoid -> {
-                Log.d(TAG, "Vehículo actualizado: " + vehicleId);
-                callback.onSuccess(vehicleId);
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al actualizar vehículo", e);
-                callback.onError(e.getMessage());
-            });
-    }
-
-    // Desactivar vehículo (borrado lógico)
-    public void deactivateVehicle(String vehicleId, VehicleCallback callback) {
-        db.collection("vehicles").document(vehicleId)
-            .update("actiu", false, "actualitzatEl", System.currentTimeMillis())
-            .addOnSuccessListener(aVoid -> {
-                Log.d(TAG, "Vehículo desactivado: " + vehicleId);
-                callback.onSuccess(vehicleId);
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al desactivar vehículo", e);
-                callback.onError(e.getMessage());
-            });
-    }
-
-    // Callback auxiliar
-    private interface CheckCallback {
-        void onResult(boolean result);
+        } catch (Exception e) { callback.onError(e.getMessage()); }
     }
 }

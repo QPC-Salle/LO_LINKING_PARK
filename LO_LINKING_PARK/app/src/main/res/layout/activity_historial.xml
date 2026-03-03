@@ -34,13 +34,24 @@
             android:paddingStart="8dp" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No hi ha cap registre"
+        android:textSize="16sp"
+        android:textColor="@android:color/darker_gray"
+        android:visibility="gone"
+        android:gravity="center"
+        android:padding="32dp" />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:padding="16dp">
 
         <LinearLayout
-            android:id="@+id/sessionContainer"
+            android:id="@+id/llHistorial"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />

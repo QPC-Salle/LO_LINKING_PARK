@@ -21,6 +21,7 @@ import android.widget.Toast;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.NotificationCompat;
+import com.example.lo_linking_park.model.Session;
 import com.example.lo_linking_park.model.Vehicle;
 import com.example.lo_linking_park.repository.SessionRepository;
 import com.example.lo_linking_park.repository.VehicleRepository;
@@ -42,6 +43,8 @@ public class ParkingSessionActivity extends AppCompatActivity {
     private String salleNom;
     private String salleAdreca;
     private int sessionId = -1;
+    private Session activeSession;
+    private SessionRepository sessionRepository;
     private long startTime;
     private CountDownTimer countDownTimer;
     private Handler notificationHandler;
@@ -66,6 +69,7 @@ public class ParkingSessionActivity extends AppCompatActivity {
         setContentView(R.layout.activity_parking_session);
 
         sessionManager = new SessionManager(this);
+        sessionRepository = new SessionRepository();
 
         salleId    = getIntent().getIntExtra("salleId", -1);
         salleNom   = getIntent().getStringExtra("salleNom");
@@ -168,28 +172,27 @@ public class ParkingSessionActivity extends AppCompatActivity {
             return;
         }
         Vehicle vehicle = vehicleList.get(selectedPos);
-        int vehicleId = Integer.parseInt(vehicle.getId());
         int userId = sessionManager.getUserId();
         int finalTempsMaxim = tempsMaxim;
         int finalAvisoTemps = avisoTemps;
 
-        SessionRepository.getInstance().createSession(userId, vehicleId, salleId,
-                tempsMaxim, avisoTemps, 0.0, 0.0,
-                new SessionRepository.SessionCallback() {
+        Session session = new Session(String.valueOf(userId), vehicle.getId(),
+                String.valueOf(salleId), tempsMaxim, avisoTemps, 0.0, 0.0);
+        sessionRepository.createSession(session, new SessionRepository.SessionCallback() {
             @Override
-            public void onSuccess(int newSessionId) {
-                onSessionCreated(newSessionId, finalTempsMaxim, finalAvisoTemps);
+            public void onSuccess(Session createdSession) {
+                activeSession = createdSession;
+                onSessionCreated(finalTempsMaxim, finalAvisoTemps);
             }
             @Override
             public void onError(String error) {
                 // Start session locally even if backend fails
-                onSessionCreated(-1, finalTempsMaxim, finalAvisoTemps);
+                onSessionCreated(finalTempsMaxim, finalAvisoTemps);
             }
         });
     }
 
-    private void onSessionCreated(int newSessionId, int tempsMaxim, int avisoTemps) {
-        sessionId  = newSessionId;
+    private void onSessionCreated(int tempsMaxim, int avisoTemps) {
         startTime  = System.currentTimeMillis();
         sessionActive = true;
         sessionManager.saveActiveSession(sessionId, startTime, tempsMaxim, salleId);
@@ -250,12 +253,12 @@ public class ParkingSessionActivity extends AppCompatActivity {
         cancelTimers();
         long elapsed = System.currentTimeMillis() - startTime;
         String preuStr = String.format(Locale.getDefault(), "%.2f€", (elapsed / 3600000.0) * TARIFA);
-        if (sessionId > 0) {
-            SessionRepository.getInstance().finishSession(sessionId, "temps",
-                    new SessionRepository.SessionCallback() {
-                @Override public void onSuccess(int id) { }
-                @Override public void onError(String e)  { }
-            });
+        if (activeSession != null) {
+            activeSession.setEstat("finalitzat");
+            activeSession.setTipusFinalitzacio("temps");
+            activeSession.setDataFi(System.currentTimeMillis());
+            sessionRepository.updateSession(activeSession, null);
+            activeSession = null;
         }
         sessionManager.clearActiveSession();
         new AlertDialog.Builder(this)
@@ -275,12 +278,12 @@ public class ParkingSessionActivity extends AppCompatActivity {
         sessionActive = false;
         long elapsed = System.currentTimeMillis() - startTime;
         String preuStr = String.format(Locale.getDefault(), "%.2f€", (elapsed / 3600000.0) * TARIFA);
-        if (sessionId > 0) {
-            SessionRepository.getInstance().finishSession(sessionId, "manual",
-                    new SessionRepository.SessionCallback() {
-                @Override public void onSuccess(int id) { }
-                @Override public void onError(String e)  { }
-            });
+        if (activeSession != null) {
+            activeSession.setEstat("finalitzat");
+            activeSession.setTipusFinalitzacio("manual");
+            activeSession.setDataFi(System.currentTimeMillis());
+            sessionRepository.updateSession(activeSession, null);
+            activeSession = null;
         }
         sessionManager.clearActiveSession();
         Toast.makeText(this, "Sessió finalitzada. Total: " + preuStr, Toast.LENGTH_LONG).show();

@@ -1,6 +1,27 @@
 <?php
 require_once 'db.php';
 
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    $userId = isset($_GET['user_id']) ? intval($_GET['user_id']) : 0;
+    if ($userId <= 0) { echo json_encode(['success' => false, 'message' => 'user_id invàlid']); exit(); }
+    $conn = getConnection();
+    $stmt = $conn->prepare(
+        "SELECT s.id, s.vehicle_id, s.salle_id, s.data_inici, s.data_fi, s.estat, s.temps_maxim_minuts, " .
+        "v.matricula, v.marca, v.model " .
+        "FROM sessions s " .
+        "JOIN vehicles v ON s.vehicle_id = v.id " .
+        "WHERE s.usuari_id = ? ORDER BY s.data_inici DESC"
+    );
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $sessions = [];
+    while ($row = $result->fetch_assoc()) { $sessions[] = $row; }
+    echo json_encode(['success' => true, 'sessions' => $sessions]);
+    $stmt->close(); $conn->close();
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'message' => 'Mètode no permès']); exit();
 }

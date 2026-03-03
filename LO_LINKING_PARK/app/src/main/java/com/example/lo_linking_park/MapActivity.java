@@ -11,14 +11,14 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-public class MapCargadorsActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MapActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap map;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map_cargadors);
+        setContentView(R.layout.activity_map_parquimetre);
 
         ImageButton btnBack = findViewById(R.id.btnBack);
         if (btnBack != null) btnBack.setOnClickListener(v -> finish());
@@ -33,10 +33,10 @@ public class MapCargadorsActivity extends AppCompatActivity implements OnMapRead
     @Override
     public void onMapReady(@NonNull GoogleMap googleMap) {
         map = googleMap;
-        LatLng mollerussa = new LatLng(41.6132, 0.6245);
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(mollerussa, 12f));
+        LatLng location = new LatLng(41.6132, 0.6245);
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(location, 15f));
         map.addMarker(new MarkerOptions()
-                .position(mollerussa)
-                .title("Mapa de Carregadors"));
+                .position(location)
+                .title("Mi Vehículo"));
     }
 }

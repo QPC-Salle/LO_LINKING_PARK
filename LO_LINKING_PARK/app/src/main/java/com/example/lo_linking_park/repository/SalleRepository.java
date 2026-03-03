@@ -3,20 +3,20 @@ package com.example.lo_linking_park.repository;
 import android.util.Log;
 
 import com.example.lo_linking_park.model.Salle;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
+/**
+ * SalleRepository - Repositorio para gestionar Salles
+ * NOTA: Firebase ha sido eliminado. Este repositorio necesita ser conectado a MariaDB
+ */
 public class SalleRepository {
     private static final String TAG = "SalleRepository";
     private static SalleRepository instance;
-    private FirebaseFirestore db;
 
     private SalleRepository() {
-        db = FirebaseFirestore.getInstance();
+        // TODO: Inicializar conexión a MariaDB
     }
 
     public static synchronized SalleRepository getInstance() {
@@ -40,165 +40,51 @@ public class SalleRepository {
         void onSuccess(Salle salle);
         void onError(String error);
     }
-    public interface ConnectionCallback {
-        void onConnected();
-        void onDisconnected(String error);
+
+    /**
+     * Obtiene todas las Salles desde la base de datos
+     * TODO: Implementar con MariaDB
+     */
+    public void getAllSalles(SalleListCallback callback) {
+        // Por ahora, retorna una lista vacía
+        Log.w(TAG, "getAllSalles() no implementado - requiere conexión a MariaDB");
+        callback.onSuccess(new ArrayList<>());
     }
 
-    public void checkFirebaseConnection(ConnectionCallback callback) {
-        // Intenta leer un documento pequeño o hacer una consulta simple
-        db.collection("salles")
-                .limit(1)
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    Log.d(TAG, "✓ Conexión exitosa con Firebase Firestore");
-                    callback.onConnected();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "✗ Error de conexión con Firebase: " + e.getMessage(), e);
-                    callback.onDisconnected(e.getMessage());
-                });
-    }
-
-
-
-    // Obtener todas las salles activas
-    public void getAllActiveSalles(SalleListCallback callback) {
-        db.collection("salles")
-            .whereEqualTo("actiu", true)
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                List<Salle> salles = new ArrayList<>();
-                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-                    Salle salle = document.toObject(Salle.class);
-                    salle.setId(document.getId());
-                    salles.add(salle);
-                }
-                Log.d(TAG, "Salles obtenidas: " + salles.size());
-                callback.onSuccess(salles);
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al obtener salles", e);
-                callback.onError(e.getMessage());
-            });
-    }
-
-    // Obtener salle por ID
+    /**
+     * Obtiene una Salle por ID
+     * TODO: Implementar con MariaDB
+     */
     public void getSalleById(String salleId, SalleDataCallback callback) {
-        db.collection("salles").document(salleId)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    Salle salle = documentSnapshot.toObject(Salle.class);
-                    if (salle != null) {
-                        salle.setId(documentSnapshot.getId());
-                        callback.onSuccess(salle);
-                    } else {
-                        callback.onError("Error al convertir datos");
-                    }
-                } else {
-                    callback.onError("Salle no encontrada");
-                }
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al obtener salle", e);
-                callback.onError(e.getMessage());
-            });
+        Log.w(TAG, "getSalleById() no implementado - requiere conexión a MariaDB");
+        callback.onError("No implementado");
     }
 
-    // Actualizar plazas disponibles (incrementar cuando termina sesión)
-    public void incrementPlacesDisponibles(String salleId, SalleCallback callback) {
-        db.collection("salles").document(salleId)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    Salle salle = documentSnapshot.toObject(Salle.class);
-                    if (salle != null) {
-                        int placesActuales = salle.getPlacesDisponibles();
-                        int placesTotals = salle.getPlacesTotals();
-
-                        if (placesActuales < placesTotals) {
-                            db.collection("salles").document(salleId)
-                                .update("placesDisponibles", placesActuales + 1,
-                                       "actualitzatEl", new Date())
-                                .addOnSuccessListener(aVoid -> {
-                                    Log.d(TAG, "Plazas incrementadas en salle: " + salleId);
-                                    callback.onSuccess(salleId);
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Error al incrementar plazas", e);
-                                    callback.onError(e.getMessage());
-                                });
-                        } else {
-                            callback.onSuccess(salleId); // Ya está al máximo
-                        }
-                    }
-                }
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al obtener salle", e);
-                callback.onError(e.getMessage());
-            });
+    /**
+     * Crea una nueva Salle
+     * TODO: Implementar con MariaDB
+     */
+    public void createSalle(Salle salle, SalleCallback callback) {
+        Log.w(TAG, "createSalle() no implementado - requiere conexión a MariaDB");
+        callback.onError("No implementado");
     }
 
-    // Decrementar plazas disponibles (cuando inicia sesión)
-    public void decrementPlacesDisponibles(String salleId, SalleCallback callback) {
-        db.collection("salles").document(salleId)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    Salle salle = documentSnapshot.toObject(Salle.class);
-                    if (salle != null) {
-                        int placesActuales = salle.getPlacesDisponibles();
-
-                        if (placesActuales > 0) {
-                            db.collection("salles").document(salleId)
-                                .update("placesDisponibles", placesActuales - 1,
-                                       "actualitzatEl", new Date())
-                                .addOnSuccessListener(aVoid -> {
-                                    Log.d(TAG, "Plazas decrementadas en salle: " + salleId);
-                                    callback.onSuccess(salleId);
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Error al decrementar plazas", e);
-                                    callback.onError(e.getMessage());
-                                });
-                        } else {
-                            callback.onError("No hay plazas disponibles");
-                        }
-                    }
-                }
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al obtener salle", e);
-                callback.onError(e.getMessage());
-            });
+    /**
+     * Actualiza una Salle existente
+     * TODO: Implementar con MariaDB
+     */
+    public void updateSalle(String salleId, Salle salle, SalleCallback callback) {
+        Log.w(TAG, "updateSalle() no implementado - requiere conexión a MariaDB");
+        callback.onError("No implementado");
     }
 
-    // Verificar si hay plazas disponibles
-    public void checkPlacesDisponibles(String salleId, CheckPlacesCallback callback) {
-        db.collection("salles").document(salleId)
-            .get()
-            .addOnSuccessListener(documentSnapshot -> {
-                if (documentSnapshot.exists()) {
-                    Salle salle = documentSnapshot.toObject(Salle.class);
-                    if (salle != null) {
-                        callback.onResult(salle.getPlacesDisponibles() > 0);
-                    } else {
-                        callback.onResult(false);
-                    }
-                } else {
-                    callback.onResult(false);
-                }
-            })
-            .addOnFailureListener(e -> {
-                Log.e(TAG, "Error al verificar plazas", e);
-                callback.onResult(false);
-            });
-    }
-
-    // Callback auxiliar
-    public interface CheckPlacesCallback {
-        void onResult(boolean hasPlaces);
+    /**
+     * Elimina una Salle
+     * TODO: Implementar con MariaDB
+     */
+    public void deleteSalle(String salleId, SalleCallback callback) {
+        Log.w(TAG, "deleteSalle() no implementado - requiere conexión a MariaDB");
+        callback.onError("No implementado");
     }
 }
+

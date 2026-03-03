@@ -3,6 +3,7 @@ package com.example.lo_linking_park;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -10,7 +11,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.lo_linking_park.repository.FirebaseAuthRepository;
+
+import com.example.lo_linking_park.repository.AuthRepository;
 import com.google.android.material.textfield.TextInputEditText;
 
 public class LoginActivity extends AppCompatActivity {
@@ -18,7 +20,7 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText etEmail, etPassword;
     private Button btnLogin;
     private ProgressBar progressBar;
-    private FirebaseAuthRepository authRepository;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +34,7 @@ public class LoginActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
 
         // Inicializar repositorio
-        authRepository = FirebaseAuthRepository.getInstance();
+        AuthRepository.getInstance();
 
         // Configurar botón de login
         btnLogin.setOnClickListener(new View.OnClickListener() {
@@ -55,7 +57,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             etEmail.setError("Email inválido");
             etEmail.requestFocus();
             return;
@@ -71,16 +73,17 @@ public class LoginActivity extends AppCompatActivity {
         progressBar.setVisibility(View.VISIBLE);
         btnLogin.setEnabled(false);
 
-        // Login en Firebase
-        authRepository.loginUser(email, password, new FirebaseAuthRepository.AuthCallback() {
+        // Login en API REST
+        AuthRepository.getInstance().login(email, password, new AuthRepository.AuthCallback() {
             @Override
-            public void onSuccess(String userId) {
+            public void onSuccess(int userId, String nom, String email) {
                 progressBar.setVisibility(View.GONE);
                 btnLogin.setEnabled(true);
-                Toast.makeText(LoginActivity.this, "Bienvenido", Toast.LENGTH_SHORT).show();
+                Toast.makeText(LoginActivity.this, "Bienvenido " + nom, Toast.LENGTH_SHORT).show();
 
-                // Aquí puedes navegar a la pantalla principal o menú
-                // Por ejemplo: startActivity(new Intent(LoginActivity.this, MenuActivity.class));
+                // Navegar al menú principal
+                Intent intent = new Intent(LoginActivity.this, MenuActivity.class);
+                startActivity(intent);
                 finish();
             }
 

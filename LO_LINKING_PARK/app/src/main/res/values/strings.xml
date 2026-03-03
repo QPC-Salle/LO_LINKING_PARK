@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">LO_LINKING_PARK</string>
     <string name="back_button_desc">Enrere</string>
+    <string name="default_web_client_id">not_used</string>
 </resources>
